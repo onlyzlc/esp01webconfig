@@ -1,0 +1,31 @@
+{
+    "files.associations": {
+        "*.ejs": "html",
+        "*.tcc": "cpp",
+        "random": "cpp",
+        "array": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "ranges": "cpp",
+        "regex": "cpp",
+        "bitset": "cpp",
+        "iomanip": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "*.inc": "cpp",
+        "fstream": "cpp",
+        "iosfwd": "cpp",
+        "istream": "cpp",
+        "limits": "cpp",
+        "streambuf": "cpp",
+        "memory": "cpp",
+        "system_error": "cpp",
+        "chrono": "cpp",
+        "algorithm": "cpp"
+    }
+}
