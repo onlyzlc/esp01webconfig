@@ -16,37 +16,41 @@
 #define DEBUG_MSG(...)
 #endif
 
-#define KEY 0
+#define KEY D8
+
+struct Config
+{
+  struct Wifi
+  {
+    char ssid[32];
+    char psw[64];
+  }wifi;
+}config;
 
 ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
 
-uint32_t keyDuration = 0;
-unsigned long keyDownTime;
-IRAM_ATTR void keyDown()
-{
-  DEBUG_MSG("Key down\n");
-  detachInterrupt(digitalPinToInterrupt(KEY));
-  keyDownTime = millis();
-  attachInterrupt(digitalPinToInterrupt(KEY), keyUp, RISING);
-}
-IRAM_ATTR void keyUp()
-{
-  DEBUG_MSG("Key up\n");
-  keyDuration = millis() - keyDownTime;
-  attachInterrupt(digitalPinToInterrupt(KEY), keyDown, FALLING);
-}
-
 void setup()
 {
-  pinMode(KEY, INPUT_PULLUP);
-
+  // 启动指示
+  pinMode(LED_BUILTIN, OUTPUT);
+  for (int i = 0; i < 3; i++)
+  {
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(50);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(50);
+  }
   Serial.begin(115200);
-  Serial1.begin(115200);
 
   EEPROM.begin(512);
 
   DEBUG_MSG("Booting...\n");
+
+  EEPROM.get(0, config);
+
+  DEBUG_MSG("ssid:%s\n", config.wifi.ssid);
+  DEBUG_MSG("psw:%s\n", config.wifi.psw);
 
   DEBUG_MSG("Mounting the filesystem...\n");
   if (!LittleFS.begin())
@@ -68,9 +72,8 @@ void setup()
   wifiSetup();
   OTAInit();
 
-  attachInterrupt(digitalPinToInterrupt(KEY), keyDown, FALLING);
-
   DEBUG_MSG("Ready\n");
+  digitalWrite(LED_BUILTIN, HIGH);
 }
 
 void loop()
@@ -78,10 +81,4 @@ void loop()
   ArduinoOTA.handle();
   server.handleClient();
   // MDNS.update();
-
-  if (keyDuration > 3000)
-  {
-    keyDuration = 0;
-    // 重置操作
-  }
 }

@@ -1,20 +1,5 @@
-const WifiStatus = {
-  255: "WL_NO_SHIELD",
-  0: "WL_IDLE_STATUS",
-  1: "WL_NO_SSID_AVAIL",
-  2: "WL_SCAN_COMPLETED",
-  3: "WL_CONNECTED",
-  4: "WL_CONNECT_FAILED ",
-  5: "WL_CONNECTION_LOST",
-  6: "WL_WRONG_PASSWORD ",
-  7: "WL_DISCONNECTED ",
-};
-
-document.addEventListener("DOMContentLoaded", function () {
-  getWifiInfo(getWifiList);
-});
-elm("form").addEventListener("submit", submitHandller);
-elm("form #cancel").addEventListener("click", function (event) {
+elm("form#wifiConfig").addEventListener("submit", submitHandller);
+elm("form#wifiConfig #cancel").addEventListener("click", function (event) {
   event.preventDefault();
   hide("#submitWifiConfig");
 });
@@ -35,11 +20,11 @@ elm(".dialogBox").addEventListener("click", function () {
   hide(this);
 })
 
-let timmer1, networks, connectedWifi, targetWifi;
+let timmer1, networks, targetWifi;
 
 let elm_tip = document.createElement("div");
 elm_tip.setAttribute("class", "tip");
-elm("form").append(elm_tip);
+elm("form#wifiConfig").append(elm_tip);
 hide(elm_tip);
 
 let elm_networks = elm("#list");
@@ -54,35 +39,11 @@ function updateList() {
   if (elm(`li[data-connected]`)) {
     elm(`li[data-connected]`).removeAttribute("data-connected");
   }
-  if (connectedWifi) {
-    elm(`li[data-ssid=${connectedWifi}]`).setAttribute("data-connected", "");
+  if (WiFi.ssid) {
+    elm(`li[data-ssid=${WiFi.ssid}]`).setAttribute("data-connected", "");
   }
 }
 
-function getWifiInfo(callback) {
-  xmlhttp = new XMLHttpRequest();
-  xmlhttp.timeout = 20000;
-  xmlhttp.onreadystatechange = function () {
-    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-      const res = JSON.parse(xmlhttp.responseText);
-      console.log(res);
-      if (res.status == 3) {
-        connectedWifi = res.ssid;
-        elm("#status").innerHTML = `已登录 ${res.ssid}\n 
-          IP: ${res.IP}, \n
-          HostName: ${res.hostName}`;
-      } else {
-        connectedWifi = ""
-        elm("#status").innerHTML = "没有登录 Wifi, 错误代码: " + WifiStatus[res.status];
-      }
-      if (callback != null) {
-        callback();
-      }
-    }
-  };
-  xmlhttp.open("GET", "/wifiInfo", true);
-  xmlhttp.send();
-}
 
 function getWifiList() {
   elm("#listbox").classList.add("loading");
@@ -116,7 +77,7 @@ function getWifiList() {
             if (item.open) {
               elm_network.setAttribute("data-open", "");
             }
-            if (item.ssid == connectedWifi) {
+            if (item.ssid == WiFi.ssid) {
               elm_network.setAttribute("data-connected", "");
             }
             elm_network.innerHTML = ` ${item.ssid} `;
@@ -154,7 +115,7 @@ function clickListHandler(event) {
 function submitHandller(event) {
   event.preventDefault();
 
-  disable("form fieldset");
+  disable("form#wifiConfig fieldset");
   elm("#submit").innerHTML = "正在测试连接...";
   hide(elm_tip);
 
@@ -163,12 +124,12 @@ function submitHandller(event) {
 
   xmlhttp = new XMLHttpRequest();
   xmlhttp.onreadystatechange = function () {
-    elm("#status").innerHTML = "正在连接到:" + targetWifi;
+    elm("#wifiStatus").innerHTML = "正在连接到:" + targetWifi;
     if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
       // 校验通过, 稍后测试连接
       setTimeout(function () {
         getWifiInfo(function () {
-          if (connectedWifi == targetWifi) {
+          if (WiFi.ssid == targetWifi) {
             // 说明ESP连接上了新WiFi
             elm("#submit").innerHTML = "连接成功";
             hide("#submitWifiConfig");
@@ -176,10 +137,10 @@ function submitHandller(event) {
             // 说明ESP因为没连上新设置的wifi而重启了, 重启后自动连接了原WiFi
             elm_tip.innerHTML = "连接失败";
             display(elm_tip);
-            elm("form").addEventListener("input", hideTip, { once: true });
+            elm("form#wifiConfig").addEventListener("input", hideTip, { once: true });
           }
           updateList();
-          enable("form fieldset");
+          enable("form#wifiConfig fieldset");
           elm("#submit").innerHTML = "确定";
         });
       }, 3000);
@@ -187,39 +148,14 @@ function submitHandller(event) {
       // 输入的值有问题
       res = xmlhttp.responseText;
       elm("#submit").innerHTML = "确定";
-      enable("form fieldset");
+      enable("form#wifiConfig fieldset");
       elm_tip.innerHTML = res;
       display(elm_tip);
-      elm("form").addEventListener("input", hideTip, { once: true });
+      elm("form#wifiConfig").addEventListener("input", hideTip, { once: true });
     }
   };
 
   xmlhttp.open("POST", "/wificonfig", true);
   xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   xmlhttp.send(`ssid=${ssid}&password=${password}`);
-}
-
-// 工具函数
-function elm(selector) {
-  return document.querySelector(selector);
-}
-
-function disable(selector) {
-  let _e = selector.nodeType == 1 ? selector : elm(selector);
-  _e.setAttribute("disabled", "disabled");
-}
-
-function enable(selector) {
-  let _e = selector.nodeType == 1 ? selector : elm(selector);
-  _e.removeAttribute("disabled");
-}
-
-function display(selector) {
-  let _e = selector.nodeType == 1 ? selector : elm(selector);
-  _e.classList.remove("hidden");
-}
-
-function hide(selector) {
-  let _e = selector.nodeType == 1 ? selector : elm(selector);
-  _e.classList.add("hidden");
 }

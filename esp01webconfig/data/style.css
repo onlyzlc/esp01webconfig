@@ -1,7 +1,8 @@
 :root{
-    --grey0: #f3f3f3;
-    --grey1: #e9e9e9;
-    --warm: rgb(255, 167, 167);
+    --grey0: hsl(0, 0%, 95%);
+    --grey1: hsl(0, 0%, 91%);
+    --warm: hsl(217, 46%, 37%);
+    --warm-light: hsl(217, 46%, 46%);
     --corner: 4px;
 }
 .icon {
@@ -17,6 +18,42 @@ html,body{
     font-family: system-ui;
 }
 
+body{
+    margin: auto;
+    padding: 0em 2em;
+}
+
+header{
+
+}
+
+nav{
+    margin: 1em 0em;;
+}
+
+nav a{
+    color: var(--warm);
+    font-size: large;
+    padding: 0.5em 0.1em;
+    margin-right: 1em;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+nav a:visited{
+    color: var(--warm);
+}
+
+.block{
+    background-color: var(--grey0);
+    border-radius:  var(--corner);;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+.block>div{
+    padding: 1em;
+}
 div,p,label,input,li,dd,dl,span,button{
     font-size:medium;
 }
@@ -27,10 +64,6 @@ h1{
 }
 
 #status {
-    margin: 1em 0;
-    background-color: var(--grey0);
-    padding: 1em;
-    border-radius: 4px;
 }
 
 form{
@@ -43,8 +76,6 @@ form div{
 }
 
 form fieldset{
-    border: none;
-    padding: 0;
 }
 
 button{
@@ -52,20 +83,28 @@ button{
     min-width: 6em;
     padding: 0.8em 1em;
     border: 0px;
-    background-color: var(--grey0);
+    background-color: var(--grey1);
 }
 
+button:active{
+    background-color: var(--grey0);
+}
 button.key {
     width: 10em;
     background: var(--warm);
+    color: white;
 }
 
-button.key:disabled{
-    background-color: var(--grey0);
-    color: var(--grey1);
+button.key:active{
+    background: var(--warm-light);
 }
 
-input {
+button:disabled{
+    background-color: white;
+    color: var(--grey0);
+}
+
+input[type="text"] {
     height: 3em;
     width: 100%;
     border-radius:  var(--corner);;
@@ -73,6 +112,7 @@ input {
     font-size: 1em;
     border: 1px solid var(--grey1);
     margin-top: 0.5em;
+    margin-bottom: 1em;
     box-sizing: border-box;
 }
 
@@ -84,11 +124,6 @@ input#password {
     letter-spacing: 0.5em;
 }
 
-
-.container{
-    margin: auto;
-    padding: 2em;
-}
 
 .loadingBox{
     position: relative;
@@ -129,11 +164,7 @@ input#password {
 }
 
 .list{
-    background-color: var(--grey0);
-    border-radius:  var(--corner);;
     overflow: hidden;
-    margin-top: 1em;
-    margin-bottom: 1em;
 }
 
 ul{
@@ -160,6 +191,7 @@ ul{
 
 .list li[data-connected]{
     background-color: var(--warm);
+    color: white;
     font-weight: bold;
 }
 

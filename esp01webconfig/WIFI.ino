@@ -1,4 +1,3 @@
-#include <EEPROM.h>
 #include <WiFiUdp.h>
 #include <ESP8266WiFi.h>
 
@@ -8,16 +7,42 @@ IPAddress subnet(255, 255, 255, 0);
 
 void wifiSetup()
 {
-    // WiFi.setAutoConnect(true);
+    WiFi.setAutoConnect(true);
     WiFi.softAPConfig(local_IP, gateway, subnet);
-    WiFi.softAP("ESP");
-    DEBUG_MSG("Setting AP...\n");
-
     WiFi.mode(WIFI_AP_STA);
-
-    DEBUG_MSG("Soft-AP IP address = %s", WiFi.softAPIP());
-
-    // 连接上一次的WiFi
-    WiFi.begin();
-    wifiStatus = WiFi.waitForConnectResult(5000);
+    delay(100);
+    WiFi.softAP(WiFi.hostname());
+    if (config.wifi.ssid)
+    {
+        DEBUG_MSG("连接网络:%s\n", config.wifi.ssid);
+        WiFi.begin(config.wifi.ssid, config.wifi.psw);
+    }
+    else
+        WiFi.begin();
+    DEBUG_MSG("WiFi 连接...");
+    switch (WiFi.waitForConnectResult(5000))
+    {
+    case -1:
+        DEBUG_MSG("超时");
+        break;
+    case WL_CONNECTED:
+        DEBUG_MSG("成功");
+        break;
+    case WL_CONNECT_FAILED:
+        DEBUG_MSG("失败");
+        break;
+    case WL_CONNECTION_LOST:
+        DEBUG_MSG("丢失");
+        break;
+    case WL_WRONG_PASSWORD:
+        DEBUG_MSG("密码错误");
+        break;
+    case WL_DISCONNECTED:
+        DEBUG_MSG("断开");
+        break;
+    default:
+        DEBUG_MSG("%d",WiFi.status());
+        break;
+    }
+    DEBUG_MSG("\n");
 }

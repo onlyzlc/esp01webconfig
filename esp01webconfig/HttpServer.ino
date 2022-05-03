@@ -7,18 +7,17 @@
 #define DEBUG_MSG(...)
 #endif
 
-int8_t wifiStatus;
 void httpServerSetup()
 {
     // Web服务器初始化
-    server.on("/", handleRoot);
+    server.on("/", HTTP_GET, handleRoot);
     server.on("/wifi", HTTP_GET, handleWifi);
     server.on("/wificonfig", HTTP_POST, handleSubmitWifiConfig);
     server.on("/wifiInfo", HTTP_GET, getWifiInfo);
     server.on("/wifiList", HTTP_GET, getWifiList);
     server.on("/test", []()
               { server.send(200, "text/plain", "this works as well"); });
-    server.onNotFound(handleNotFound);
+    server.onNotFound(handleRoot);
     server.enableCORS(true);
     // server.enableETag(true);
     server.serveStatic("/", LittleFS, "/");
@@ -30,7 +29,6 @@ void handleRoot()
 {
     DEBUG_MSG("Redirect...");
     String url = "/index.html";
-
     server.sendHeader("Location", url, true);
     server.send(302);
 }
@@ -61,6 +59,18 @@ void handleWifi()
     server.sendHeader("Location", url, true);
     server.send(302);
 }
+void getWifiInfo()
+{
+    JSONVar res;
+    res["hostName"] = WiFi.hostname();
+    res["status"] = WiFi.status();
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        res["ssid"] = WiFi.SSID();
+        res["ip"] = WiFi.localIP().toString();
+    }
+    server.send(200, "text/plain", JSON.stringify(res));
+}
 void handleSubmitWifiConfig()
 {
     if (server.method() == HTTP_POST)
@@ -70,7 +80,7 @@ void handleSubmitWifiConfig()
 
         // 校验
         // 不测试已连接的WIfi
-        if (wifiStatus == WL_CONNECTED && ssid == WiFi.SSID())
+        if (WiFi.status() == WL_CONNECTED && ssid == WiFi.SSID())
         {
             DEBUG_MSG("已连接此Wifi \n");
             server.send(403, "text/plain", "Connected");
@@ -97,39 +107,29 @@ void handleSubmitWifiConfig()
 
         // 等待Wifi连接, 5秒超时或连接失败后, 后重新连接原存储的wifi;
         // 若成功连接新 WiFi , 则更新存储, 并保持新WiFi连接;
-        // wifiStatus 供web查询返回状态;l
         DEBUG_MSG("连接到新Wifi\n");
         WiFi.begin(ssid, password);
-        wifiStatus = WiFi.waitForConnectResult(10000);
-        DEBUG_MSG("状态码: %d\n", wifiStatus);
-        if (wifiStatus == WL_CONNECTED)
+        if (WiFi.waitForConnectResult(10000) == WL_CONNECTED)
         {
-            storeWifi(ssid, password);
+            DEBUG_MSG("状态码: %d\n", WiFi.status());
+            // saveWifi(ssid, password);
+            strcpy(config.wifi.ssid, ssid.c_str());
+            strcpy(config.wifi.psw, password.c_str());
+            
+            EEPROM.put(0, config.wifi);
+            EEPROM.commit();
         }
         else
         {
-            String oldSSID = getStoreSSID();
-            if (oldSSID.length() > 0)
+            if (config.wifi.ssid)
             {
-                DEBUG_MSG("重连到:%s\n", oldSSID.c_str());
-                WiFi.begin(oldSSID, getStorePSW());
-                wifiStatus = WiFi.waitForConnectResult(10000);
-            }
+                DEBUG_MSG("重连到:%s\n", config.wifi.ssid);
+                WiFi.begin(config.wifi.ssid, config.wifi.psw);
+            }            
         }
     }
 }
-void getWifiInfo()
-{
-    JSONVar res;
-    res["status"] = wifiStatus;
-    if (wifiStatus == WL_CONNECTED)
-    {
-        res["ssid"] = WiFi.SSID();
-        res["IP"] = WiFi.localIP().toString();
-        res["hostName"] = WiFi.hostname();
-    }
-    server.send(200, "text/plain", JSON.stringify(res));
-}
+
 void getWifiList()
 {
     JSONVar res;
